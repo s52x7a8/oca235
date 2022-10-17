@@ -1,0 +1,616 @@
+	function validate(validationRules, booleanShowBeforeBtnSubmit){
+		clearFormErrors();
+		
+		var valid = true;
+		valid = validateRequiredFields( validationRules.required, validationRules.formId ) && valid;
+		valid = validateFieldsSyntax( validationRules.fieldValidations, validationRules.formId ) && valid;
+		valid = validateCustomRules(validationRules.customRules) && valid;
+		
+		showGlobalErrors(validationRules.formId, booleanShowBeforeBtnSubmit);
+		
+		return valid;
+	}
+	
+	/*
+	 *	Limpia los errores seteados en los formularios existentes. 
+	 */
+	function clearFormErrors(){
+		$('.error_highlight').removeClass('error_highlight');
+		$('.error_msg').remove();
+		$('#form_error_message').hide();
+		$('#form_error_message div#mensajesErrores').remove();
+		$('#form_error_message').append('<div id="mensajesErrores" class="d-flex"><i class="icon-warning-fill" style="color:red;font-size: 30px;align-self: center;"></i><ol></ol></div>');
+	}
+	
+	/*
+	 * Si hay errores globales de validacion, muestro dichos mensajes.
+	 */
+	function showGlobalErrors(formId, booleanShowBeforeBtnSubmit){
+		if ( $('#form_error_message li').length > 0 ){
+			if(booleanShowBeforeBtnSubmit){
+				$('#form_error_message').addClass('error_highlight');
+				$('#form_error_message').show();
+				$("#"+formId+"").after($('#form_error_message'));
+			}else{
+				$('#form_error_message').addClass('error_highlight');
+				$('#form_error_message').slideDown(400, function(){
+					$(document).scrollTop( $(document).outerHeight() );
+				});
+			}
+		}
+	}
+	
+	/*
+	 * Agrega un mensaje de error global. Si ya hay otro lo apendea, no borra los anteriores.
+	 */
+	function addGlobalError(errorMsg){
+		$('#form_error_message ol').append('<li>'+errorMsg+'</li>');
+	}
+	
+	/*
+	 * Valida un campo por su respectivo "name" utilizando una funcion de callback. En caso de error setea "errorMsg".
+	 * Recibe una lista de reglas de validacion de campos.    
+	 */
+	function validateFieldsSyntax(fieldValidations, formId){
+		valid = true;
+		
+		if (fieldValidations == undefined)
+			return valid;
+		
+		$(fieldValidations).each(function(){
+			if ( $( (formId != undefined ? '#' + formId + ' ' : '') + 'p[id="'+this.inputName+'_error"]').length == 0 && ! this.validateFunction(this.inputName) ){
+				$('[name="'+this.inputName+'"]').addClass('error_highlight');
+				if(this.errorMsg != undefined){
+					addGlobalError(this.errorMsg);
+					//$('[name="'+this.inputName+'"]').after('<p id="'+this.inputName+'_error" class="error_msg">'+this.errorMsg+'</p>');
+				}
+				$('[name="'+this.inputName+'"]').next('p').slideDown();
+				valid = false;
+			}
+		});
+		
+		return valid;
+	}
+	
+	/*
+		Valida que los campos requeridos de un formulario esten completos.
+		Recibe una lista de "name" de los inputs, y opcionalmente el "id" del formulario en cuestion.
+	*/	
+	function validateRequiredFields(required, formId){
+		var valid = true;
+		var requiredMissing = 0;
+		
+		if (required == undefined)
+			return valid;
+
+		$(required).each(function(){
+			var $field = $( (formId != undefined ? '#' + formId + ' ' : '') + '[name="'+ this +'"]');
+			if ( $field.val() == null || $field.val() == '' || $field.val().trim() == ''){
+				requiredMissing++;
+				$field.addClass('error_highlight');
+			}	
+		});
+		
+		if (requiredMissing > 0){
+			valid = false;
+			addGlobalError('Record&aacute; completar los campos obligatorios');
+		}
+		
+		return valid;
+	}
+	
+	/*
+	 * Reglas de validacion totalmente customo, en caso de ser necesarias y que el framework no las contemple.
+	 */
+	function validateCustomRules(customRules){
+		valid = true;
+		
+		if (customRules == undefined)
+			return valid;
+		
+		$(customRules).each(function(){
+			if ( ! this.validateFunction() ){
+				if(this.errorMsg != undefined){
+					addGlobalError(this.errorMsg);
+				}
+				if (this.inputName != undefined) {
+					//TODO contemplar que puede recibir una lista de names
+					$('[name="' + this.inputName + '"]').addClass('error_highlight');
+				}
+				valid = false;
+			}
+		});
+		
+		return valid;
+	}
+	
+	/*
+	 * valida caracteres validos en campos de texto pero sin digitos ni simbolos
+	 */
+	function isValidTextoSoloLetras(inputName){
+		
+		var charValidoRegEx = /^[A-Za-z\u00e1\u00c1\u00e9\u00c9\u00ed\u00cd\u00f3\u00d3\u00fa\u00da\u00d1\u00f1\s]*$/;
+		var resultado = charValidoRegEx.test($('[name="'+inputName+'"]').val());
+		if(!resultado){
+			this.errorMsg = 'No se aceptan n&uacute;meros ni s&iacute;mbolos para el campo "' + $('[name="'+inputName+'"]')[0].parentNode.previousElementSibling.innerText.trim() + '"';
+		}
+		
+		return resultado;
+	}
+	
+	function isValidTextoSoloLetrasEspecial(inputName){
+		
+		var charValidoRegEx = /^[A-Za-z\u00e1\u00c1\u00e9\u00c9\u00ed\u00cd\u00f3\u00d3\u00fa\u00da\u00d1\u00f1\s]*$/;
+		var resultado = charValidoRegEx.test($('[name="'+inputName+'"]').val());
+		if(!resultado){
+			this.errorMsg = 'No se aceptan n&uacute;meros ni s&iacute;mbolos para el campo "' + $('[name="'+inputName+'"]')[0].parentNode.innerText.trim() + '"';
+		}
+		
+		return resultado;
+	}
+	
+	/*
+	 * valida caracteres validos en campos de texto
+	 */
+	function isValidTexto(inputName){
+		var charValidoRegEx = /^[A-Za-z\d#\$%&+-\.:,';\(\)_\u00e1\u00c1\u00e9\u00c9\u00ed\u00cd\u00f3\u00d3\u00fa\u00da \u00d1 \u00f1 \s]$/;
+		var textoRaw = $('[name="'+inputName+'"]').val();
+		var resultado = true;
+		var errorMsgDesc = "Caracter ingresado no admitido:";
+		
+		
+		for (var i = 0; i < textoRaw.length; i++){
+			if (!charValidoRegEx.test( textoRaw[i] )){
+				errorMsgDesc += " " + textoRaw[i];
+				resultado = false;
+			}
+		}	
+		if(resultado){
+			var texto = cambiarCaracteres(textoRaw);
+			$('[name="'+inputName+'"]').val(texto);
+		}else{
+			this.errorMsg = errorMsgDesc;
+		}
+		
+		return resultado;
+	}
+	
+	/*
+	 * cambia los caracteres invalidos por los validos
+	 */
+	function cambiarCaracteres(texto) {
+		
+		var invalidos = ["\u00e1","\u00c1","\u00e9","\u00c9","\u00ed","\u00cd","\u00f3","\u00d3","\u00fa","\u00da","\u00f1","\u00d1"];
+		var validos = ["a","A","e","E","i","I","o","O","u","U","n","N"];
+		
+		for(var i=0; i< texto.length; i++){
+			for(var j=0; j< invalidos.length; j++){
+				if(texto[i] == invalidos[j]){
+					texto = texto.replaceAt(i, validos[j]);
+					break;
+				}		
+			}
+		}
+		return texto;
+	}
+
+	
+	/*
+	 * Reemplaza caracteres en una posicion especifica
+	 */
+	
+	String.prototype.replaceAt=function(index, character) {
+	    return this.substr(0, index) + character + this.substr(index+character.length);
+	}
+
+	/*
+	 * Valida campos alfa numéricos con espacios
+	 */
+	function isValidAlphanumericWithSpaces(inputName){
+		var withSpacesAlphanumericRegEx = /^[\w\d\s]*$/;
+		return withSpacesAlphanumericRegEx.test( $('[name="'+inputName+'"]').val() );
+	}
+	
+	/*
+	 * Valida campos alfa numéricos sin espacios
+	 */
+	function isValidAlphanumericWithNoSpaces(inputName){
+		var withNoSpacesAlphanumericRegEx = /^[\w\d]*$/;
+		return withNoSpacesAlphanumericRegEx.test( $('[name="'+inputName+'"]').val() );
+	}
+	
+	/*
+	 * valida direccion y que sean solo caracteres alfanumericos
+	 */
+	function isValidAddressAlphanumeric(inputName){
+		// Tengo que hacer un bind del objeto de la validacion, porque sino se pierde.
+		var boundValidTexto = isValidTexto.bind(this);
+		var boundValidAddress = isValidAddress.bind(this);
+		return (boundValidTexto(inputName) && boundValidAddress(inputName));
+	}
+	
+	function isValidPasswordOld(inputName){
+	    var salida = "";
+	    var cadena = $('[name="'+inputName+'"]').val();
+	    var OK = true;	// Resultado de conversion
+	    validas = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-#$%&+_.,:;/@ " + String.fromCharCode(10, 13);
+	    min = "\u00e1\u00e0\u00e2\u00e4\u00e9\u00e8\u00ea\u00eb\u00ed\u00ec\u00ee\u00ef\u00f3\u00f2\u00f4\u00f6\u00fa\u00f9\u00fb\u00fc";
+	    may = "\u00c1\u00c0\u00c2\u00c4\u00c9\u00c8\u00ca\u00cb\u00cd\u00cc\u00ce\u00cf\u00d3\u00d2\u00d4\u00d6\u00da\u00d9\u00db\u00dc";
+	    var c;
+	    for(var i = 0; i < cadena.length; i++) {
+	        var caracter = cadena.charAt(i);
+	        var codigo = cadena.charCodeAt(i);
+	        if(validas.indexOf(caracter) != -1) {	// Letras, números, etc. (sin separadores de mensajeria)
+	            salida += caracter;
+	        } else {
+	            c = min.indexOf(caracter);
+	            if(c == -1) {
+	                if(caracter == "\u00d1") {
+	                    salida += "N"
+	                } else {
+	                    if(caracter == "\u00f1") {
+	                        salida += "n";
+	                    } else {
+	                        if(caracter == "\u00e7") {
+	                            salida += "c";
+	                        } else {
+	                            if(caracter == "\u00c7") {
+	                                salida += "C";
+	                            } else {
+	                                c = may.indexOf(caracter);
+	                                if(c == -1) {
+	                                    OK = false;
+	                                    return false;
+	                                } else {
+	                                    if((c >= 0) && (c <= 3))
+	                                        salida += "A"; else if((c >= 4) && (c <= 7))
+	                                        salida += "E"; else if((c >= 8) && (c <= 11))
+	                                        salida += "I"; else if((c >= 12) && (c <= 15))
+	                                        salida += "O"; else if((c >= 16) && (c <= 19))
+	                                        salida += "U";
+	                                }
+	                            }
+	                        }
+	                    }
+	                }
+	            } else {
+	                if((c >= 0) && (c <= 3))
+	                    salida += "a"; else if((c >= 4) && (c <= 7))
+	                    salida += "e"; else if((c >= 8) && (c <= 11))
+	                    salida += "i"; else if((c >= 12) && (c <= 15))
+	                    salida += "o"; else if((c >= 16) && (c <= 19))
+	                    salida += "u";
+	            }
+	        }
+	    }
+	    if(OK) {
+	        $('[name="'+inputName+'"]').val(salida);
+	    }
+	    return OK;
+	}
+	
+	function isValidPassword(inputName){
+	    var salida = "";
+	    var cadena = $('[name="'+inputName+'"]').val();
+	    var OK = true;	// Resultado de conversion
+	    validas = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+	    var c;
+	    for(var i = 0; i < cadena.length; i++) {
+	        var caracter = cadena.charAt(i);
+	        var codigo = cadena.charCodeAt(i);
+	        if(validas.indexOf(caracter) != -1) {	// Letras, números, etc. (sin separadores de mensajeria)
+	            salida += caracter;
+	        } else if(caracter == "\u00d1") {
+	        	salida += "N"
+	        } else if(caracter == "\u00f1") {
+	        	salida += "n";
+	        } else {
+	            OK = false;
+	            return false;
+	        }
+	    }
+	    if(OK) {
+	        $('[name="'+inputName+'"]').val(salida);
+	    }
+	    return OK;
+	}
+	
+	/*
+	 * Valida campos numéricos sin espacios
+	 */
+	function isValidNumeric(inputName){
+		var numericRegEx = /^[\d]*$/;
+		return numericRegEx.test($('[name="'+inputName+'"]').val());
+	}
+
+	function isValidPhone(inputName) {
+		if ($('[name="'+inputName+'"]').val().length > 0) {
+			var numericRegEx = /^\d{4} \d{4}$/;
+			return numericRegEx.test($('[name="'+inputName+'"]').val());
+		}
+		return true;
+	}
+	
+	function isValidCellphone(inputName) {
+		var numericRegEx = /^09\d( \d{3}){2}$/;
+		return numericRegEx.test($('[name="'+inputName+'"]').val());
+	}
+	
+	function isValidCard(inputName) {
+		var numericRegEx = /^\d{4}( \d{4}){3}$/;
+		return numericRegEx.test($('[name="'+inputName+'"]').val());
+	}
+	
+	function isValidCedula(inputName) {
+		var val = $('[name="'+inputName+'"]').val();
+		var numericRegEx = /^\d{6}\d?-\d$/;
+		if(numericRegEx.test(val)) {
+			var cedulaIdentidad = val.split("-")[0];
+			if (cedulaIdentidad.length == 6)
+				cedulaIdentidad = "0" + cedulaIdentidad;
+			var digitoVerificador = val.split("-")[1];
+			return digitoVerificador == getDigitoVerificador(cedulaIdentidad);
+		}
+		return false;
+	}
+	
+	function isValidCedulaLogin(inputName) {
+		var val = $('[name="'+inputName+'"]').val().split("-").join("");
+		var numericRegEx = /^\d{7}\d?$/;
+		if(numericRegEx.test(val)) {
+			var cedulaIdentidad;
+			var digitoVerificador;
+			if(val.length == 7){
+				digitoVerificador = val.substring(6);
+				cedulaIdentidad = "0" + val.substring(0,6);
+			} else {
+				digitoVerificador = val.substring(7);
+				cedulaIdentidad = val.substring(0,7);
+			}
+			return digitoVerificador == getDigitoVerificador(cedulaIdentidad);
+		}
+		return false;
+	}
+	
+	/*
+	 * Valida campos de email. Ej: obaca_presidente@gmail.com, sarasa@itau.com.uy
+	 */
+	function isValidEmail(inputName){
+		var emailRegEx = /^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/;
+		return $('[name = "'+inputName+'"]').val() == '' || emailRegEx.test($('[name = "'+inputName+'"]').val()); 
+	}
+	
+	function isValidEmailConMayusculas(inputName){
+		var emailRegEx = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/;
+		return $('[name = "'+inputName+'"]').val() == '' || emailRegEx.test($('[name = "'+inputName+'"]').val()); 
+	}
+	
+	function isValidEmailNotEmpty(inputName){
+		var emailRegEx = /^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/;
+		return emailRegEx.test($('[name = "'+inputName+'"]').val()); 
+	}
+	
+	/*
+	 * Valida campos de dirección
+	 */
+	function isValidAddress(inputName){
+		var addressMaxLength = 64;
+		var addressMinLength = 5;
+		var address = $('[name = "'+inputName+'"]').val();
+		return (address.length == 0) || (addressMinLength <= address.length && address.length <= addressMaxLength);
+	}
+	
+	/*
+	 * Valida que la direccion tenga un maximo de 32 caracteres
+	 */
+	function isValidAddressMaxLength32(inputName){
+		var addressMaxLength = 32;
+		var addressMinLength = 5;
+		var address = $('[name = "'+inputName+'"]').val();
+		return (address.length == 0) || (addressMinLength <= address.length && address.length <= addressMaxLength);
+	}
+	
+	/*
+	 * Valida campos de fecha
+	 */
+	
+	function isValidDate(inputName){
+		var date = /^(\d{2}\/\d{2}\/\d{4})*$/;
+		var valid = false;
+		valid = moment($('[name = "'+inputName+'"]').val(), 'DD/MM/YYYY').isValid();
+		return (date.test($('[name = "'+inputName+'"]').val()) && valid);
+	}
+	
+	function isValidDia(inputName){
+		var dia = /^(0?[1-9]|[12]\d|3[01])$/;
+		return dia.test($('[name = "'+inputName+'"]').val());
+	}
+	
+	function isValidMes(inputName){
+		var mes = /^(0?[1-9]|1[012])$/;
+		return mes.test($('[name = "'+inputName+'"]').val());
+	}
+	
+	/*
+	 * Valida campos de importes. 
+	 * Acepta separadores de miles y decimales.
+	 * Por default, 13 digitos enteros maximo y 2 decimales.
+	 * Si es vacio devuelve true. 
+	 */
+	function isAmount(inputName){
+		var amauntFormat = /^\d{3,15}$/;
+		return $('[name = "'+inputName+'"]').val() == '' || amauntFormat.test( $('[name = "'+inputName+'"]').val().replace(/[^\d]+/g, '') );  
+	}
+	
+	/**
+	 * 
+	 */
+	function isAmountGTZero(inputName){
+		return ($('[name = "'+inputName+'"]').val() > "0,00")
+	}
+	
+	/*
+	 * Aplica formato default de moneda al valor de un input.
+	 */
+	function transformNumberValueToCurrency(){
+		var signoMenos = $(this).val().replace('-','');
+		var valorFormateado = formarCurreny(signoMenos.toString());
+		var actualValue = numeral().unformat( valorFormateado );
+		$(this).val( numeral(valorFormateado).format() );
+	}
+	
+	function agregarSignoPesos () {
+		var valor = $(this).val();
+		$(this).val( "$ "+ valor);
+	}
+	
+	function formarCurreny(num) {
+		var regxDigitos = /^\d+$/;
+		var rx = /[\.,]/;
+		var rxDigConSimbolos = /(\d+[.,\d]+|[.,]*\d+[.,\d]*)/;
+		if (!regxDigitos.test(num)){
+			if (rxDigConSimbolos.test(num)) {
+				var long = num.length - 1;
+				var primerSimbolo = true;
+				for (var i = long; i >= 0 ; i--) {
+					var char = num[i];
+					if (rx.test(char)){
+						if (primerSimbolo){
+							num = setCharAt(num,i,",");
+							primerSimbolo = false;
+						} else {
+							num = setCharAt(num,i,".");
+						}
+					}
+					
+				}				
+			} else 
+				num = "";
+		}
+		return num;
+	}
+	
+	function setCharAt(str,index,chr) {
+	    if(index > str.length-1) return str;
+	    return str.substr(0,index) + chr + str.substr(index+1);
+	}
+	
+	function validateNuevasContrseniasAlMenosLetraYDigito(inputName){
+		var caracter = /^.*[a-zA-Z].*$/;
+		var digito = /^.*\d.*$/;
+		return (caracter.test($('[name = "'+inputName+'"]').val()) && digito.test($('[name = "'+inputName+'"]').val()));
+	}
+	
+	function validateNuevasContrseniasIguales(inputNameNueva,inputNameReingresada){
+		return $('[name = "'+inputNameNueva+'"]').val() == $('[name = "'+inputNameReingresada+'"]').val();
+	}
+	
+	function validateLongitud(inputName){
+		return ($('[name = "'+inputName+'"]').val().length == 8);
+	}
+	
+	function validateLongitudMayor8Menor10(inputName){
+		return ($('[name = "'+inputName+'"]').val().length >= 8 && $('[name = "'+inputName+'"]').val().length <= 10);
+	}
+	
+	function validateLongitud4(inputName){
+		return ($('[name = "'+inputName+'"]').val().length == 4);
+	}
+	
+	function validateProhibida(inputName){
+		var prohibidas = ["A1234567","a1234567","1234567a","1234567A","qwerty12","QWERTY12","12qwerty","12QWERTY","asdf1234","ASDF1234","1234asdf","1234ASDF",
+				 "A9876543","a9876543","9876543a","9876543A","qwerty98","QWERTY98","98qwerty","98QWERTY","asdf9876","ASDF9876","9876asdf","9876ASDF",
+				 "oca1234","OCA1234","1234oca","1234OCA","oca9876","OCA9876","9876oca","9876OCA",
+				 "link1234","LINK1234","1234link","1234LINK","link9876","LINK9876","9876link","9876LINK",
+				 "abcd1234","ABCD1234","1234abcd","1234ABCD","abcd9876","ABCD9876","9876abcd","9876ABCD"];
+		
+		var pw = $('[name = "'+inputName+'"]').val();
+		return ($.inArray(pw,prohibidas) == -1 );
+	}
+	
+	function validateCaracteresRepetidos(inputName){
+		var regCaracteresRepetidos = /([-a-zA-Z0-9#$%&+.:;_])\1{2,}/g;
+		return !regCaracteresRepetidos.test($('[name = "'+inputName+'"]').val());
+	}
+	
+	function getIndiceDivAlquileres(nombreSelect){
+		return  nombreSelect.substring(nombreSelect.length-2, nombreSelect.length-1);
+	}
+	
+	function isValidCI(inputName){
+		var input = $('[name = "'+inputName+'"]').val();
+		var cedulaIdentidad = input.replace(/\D/g, '');
+		var digitoVerificador = input[input.length - 1];
+		cedulaIdentidad = input.replace(/[0-9]$/, '');
+		return isValidNumeric(inputName) && (digitoVerificador == getDigitoVerificador(cedulaIdentidad));
+	}
+	
+	function getDigitoVerificador(cedulaIdentidad){
+		var a = 0; var i = 0;
+	    
+		if(cedulaIdentidad.length <= 6){
+			for(i = cedulaIdentidad.length; i < 7; i++){
+	        	cedulaIdentidad = '0' + cedulaIdentidad;
+	        }
+	    }
+	    
+		for(i = 0; i < 7; i++){
+	        a += (parseInt("2987634"[i]) * parseInt(cedulaIdentidad[i])) % 10;
+	    }
+	    
+		if(a%10 === 0){
+	        return 0;
+	    }else{
+	    	return 10 - a % 10;
+	    }
+	}
+	
+	function isValidRUT(inputName){
+		
+		var rut = $('[name = "'+inputName+'"]').val();
+		
+		if (rut.length != 12) {
+			return false;
+		}
+
+		var multipliers = [4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+		var sum = 0;
+		var i = 0;
+		for (i = 0; i < 11; i++) {
+			var numericChar = rut[i];
+			sum += multipliers[i] * parseInt(numericChar);
+		}
+
+		sum = sum % 11;
+		sum = 11 - sum;
+
+		if (sum == 11) sum = 0;
+
+		return (sum == parseInt(rut[11]));
+
+	}
+	
+	/* ERRORES */
+	function errorEmail() {
+		return "Verific&aacute; que el formato de mail sea correcto: Ej. usuario@ejemplo.com";
+	}
+	
+	function errorCelular() {
+		return "Verific&aacute; que el formato de celular sea correcto: Ej. 099 000 000";
+	}
+	
+	function errorTelefono() {
+		return "Verific&aacute; que el formato de tef&eacute;fono fijo sea correcto: Ej. 2200 0000";
+	}
+	
+	function errorCedula() {
+		return "Verific&aacute; que la c&eacute;dula de identidad est&eacute; completa y sea v&aacute;lida.";
+	}
+
+	function errorTarjeta() {
+		return "Verific&aacute; que el formato y el n&uacute;mero de la tarjeta ingresada sean v&aacute;lidos. Ej. 0000 0000 0000 0000";
+	}
+
+	// Locale default
+	numeral.language('es');
+	numeral.defaultFormat('0,0.00');

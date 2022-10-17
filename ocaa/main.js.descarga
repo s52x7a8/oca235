@@ -1,0 +1,1093 @@
+var slideSectionContent = function(){
+	var obj = $(this).parent('.modulo');
+	if (!inAjaxRequest && $(obj).hasClass("loadWithAjax") && !$(obj).hasClass("abierto") && $(obj).children('.contenido').length < 1){
+		inAjaxRequest = true;
+		var idTimeout = setTimeout( function(){ $("#modalLoading").modal('show'); } , 3000);
+		var action = $(obj).attr("data-action");
+		var dataFunction = $(obj).attr("data-function");
+		var dataError = $(obj).attr("data-error");
+		var dataCallback = $(obj).attr("data-callback");
+		$.ajax({
+        	url: action,
+            type:'post',
+            dataType: 'json',
+            timeout: 60000,
+            contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+            success: function(data) {
+            	inAjaxRequest = false;
+            	clearTimeout(idTimeout);
+	        	$("#modalLoading").modal('hide');
+            	if (data.ocalink_msg.data.error != undefined)
+	        		window[dataError].call(obj, data.ocalink_msg.data.error);
+            	else{
+            		var response = window[dataFunction].call(obj, data.ocalink_msg.data);
+            		$(obj).append(response);
+            		$(obj).toggleClass('abierto');
+            		$(obj).children('.contenido').stop(true, true).slideToggle(300);
+            		if (dataCallback)
+            			window[dataCallback].call(obj);
+            	}
+            }, error: function(data,b,c) {
+            	inAjaxRequest = false;
+            	clearTimeout(idTimeout);
+	        	$("#modalLoading").modal('hide');
+	        	if (data.status == 403)
+	        		window.location.reload();
+	        	else{
+	        		window[dataError].call(obj);
+	        	}            	
+            }
+    	});
+	}else {
+		$(obj).toggleClass('abierto');
+		$(obj).children('.contenido').stop(true, true).slideToggle(300);
+	}
+};
+
+/* Fix combo box IE 09/08/2016 */
+$(document).ready(function(){
+	$( ".custom-combobox-input" ).focus();
+	$( ".custom-combobox-input" ).blur();
+	$("#ui-id-2").addClass("no-display");
+	$("#tab-servicios-publicos").on("click", function(){
+		$("#ui-id-2").removeClass("no-display");
+		$( ".custom-combobox-input" ).focus();
+		$( ".custom-combobox-input" ).blur();
+	});
+});
+
+$(document).ready(function(){
+	//	$('.modulo .flex').on("click", function(){
+	//		$(this).parent('.modulo').toggleClass('abierto');
+	//		$(this).siblings('.contenido').stop(true, true).slideToggle(300);
+	//	});
+	$('.modulo .item-table').on("click", function(){
+		$(this).parents('.modulo').toggleClass('abierto');
+		$(this).siblings('.contenido').stop(true, true).slideToggle(300);
+	});
+	$('.modulo .flex-solicitud').on("click", function(){
+		if($(this).parent('.modulo').attr("class") == 'modulo cerrado abierto' || $(this).parent('.modulo').attr("class") == 'modulo cerrado sublink abierto'){
+			$(this).parent('.modulo').toggleClass('abierto');
+			$(this).siblings('.contenido').stop(true, true).slideToggle(300);
+		}else{
+		$('.abierto .contenido').stop(true, true).slideToggle(300);
+		$(".abierto").removeClass('abierto');
+		$(this).parent('.modulo').addClass('abierto');
+		$(this).siblings('.contenido').stop(true, true).slideToggle(300);
+	}
+		
+	});
+
+});
+
+$(window).on("resize", function() {
+    if(screen.width>768){
+                   $( ".custom-combobox-input" ).blur();
+    }
+});
+
+
+// tablas consulta historica
+$(document).ready(function () {
+	$('.table-history').hide();
+	$('#-1').show();
+	$('#select-history').on("change", function () {
+		$('.table-history').hide();
+		$('#'+$(this).val()).show();
+	});
+// boton expandir
+	$('.btn-expand_table').on("click", function () {
+		$('.scroll-table').addClass('expanded-table');
+		$('.btn-expand_table').css('display','none');
+		$('.btn-compress_table').css('display','block');
+	});
+// boton comprimir
+	$('.btn-compress_table').on("click", function () {
+		$('.scroll-table').removeClass('expanded-table');
+		$('.btn-compress_table').css('display','none');
+		$('.btn-expand_table').css('display','block');
+	});
+// modulo agregar beneficiario 
+ $('.add-beneficiary').on("click", function() { 
+    $('.add-beneficiary-module').fadeIn('slow');
+		$('.add-beneficiary').hide();
+		clearFormErrors();
+});
+
+ $('.cancel-beneficiary, [data-dismiss="modal"]').on("click", function() { 
+      $('.add-beneficiary-module').hide();
+			$('.add-beneficiary').fadeIn('slow');		 
+  });
+
+
+});
+
+// delay token transferencias
+setTimeout(function() {$( ".info-token .text-info1, #tokensms" ).fadeIn();}, 10);
+$(document).ready(function(){
+	$( ".btn-request-token" ).on("click", function() {
+		setTimeout(function() {$( ".info-token .text-info1, .btn-request-token" ).hide();}, 200);
+		setTimeout(function() {$( ".codigo-enviado, .info-token .text-info2" ).fadeIn();}, 200);
+
+		setTimeout(function() {$( ".info-token .text-info1, .info-token .text-info2" ).hide();}, 20000);
+		setTimeout(function() {$( ".info-token .text-info3" ).fadeIn();}, 20000);	
+	});
+	$( ".link-text" ).on("click", function() {
+		setTimeout(function() {$( ".info-token .text-info3" ).hide();}, 200);
+		setTimeout(function() {$( ".info-token .text-info4" ).fadeIn();}, 200);
+	});
+	
+	
+});
+function mostrar(id) {
+    if (id == "tokensms") {
+    		setTimeout(function() {$( ".codigo-enviado, #tokensms p" ).hide();}, 10);
+			setTimeout(function() {$( "#tokenfisico, #tokensms, .btn-request-token, .text-info1" ).fadeIn();}, 15);
+		}
+
+    if (id == "tokenfisico") {
+			setTimeout(function() {$( "#tokenfisico, #tokensms, .btn-request-token" ).hide();}, 10);
+			setTimeout(function() {$( ".codigo-enviado" ).fadeIn();}, 15);
+		}
+};
+
+//Popover
+$(function () {
+  $('[data-toggle="popover"]').popover();
+});
+
+function detectIE() {
+	var ua = window.navigator.userAgent;
+	 // Test values; Uncomment to check result
+
+	 // IE 10
+	 // ua = 'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)';
+	  
+	 // IE 11
+	 // ua = 'Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko';
+	  
+	 // Edge 12 (Spartan)
+	 // ua = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36 Edge/12.0';
+	  
+	 // Edge 13
+	 // ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Safari/537.36 Edge/13.10586';
+
+	  var msie = ua.indexOf('MSIE ');
+	  if (msie > 0) {
+	    // IE 10 or older => return version number
+	    return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+	  }
+
+	  var trident = ua.indexOf('Trident/');
+	  if (trident > 0) {
+	    // IE 11 => return version number
+	    var rv = ua.indexOf('rv:');
+	    return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+	  }
+
+	  var edge = ua.indexOf('Edge/');
+	  if (edge > 0) {
+	    // Edge (IE 12+) => return version number
+	    return parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10);
+	  }
+
+	  // other browser
+	  return false;
+}
+
+// funcion imprimir
+function printDiv(element) {
+	var printContents = '';
+	idElement = $("#printableArea .active").attr("id");
+	var navegador = detectIE();
+
+	if (navegador != 8) {
+		printContents += $('#personal-info').html();
+		printContents += $('#' + element).html();
+		printHTML(printContents, 'printing-frame-' + (new Date()).getTime());
+	} else {
+		printDivModal(idElement);
+		cuenta = idElement;
+	}
+}
+
+function printDivModal(element) {
+	globalID = element;
+	var navegador = detectIE();
+	var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
+
+    if (navegador <= 11 && navegador != false) { 	
+    	if(navegador != 8) {
+    		$(".modal-backdrop").remove();
+    	}
+    	prepPrintCoupon(element);
+
+    } else if (is_chrome){
+
+		$(".modal-backdrop").remove();
+		prepPrintCoupon(element);
+
+	} else {
+		
+		var printContents = '';
+		printContents += $('#' + element).html();
+		printHTML(printContents, 'printing-frame-' + (new Date()).getTime());
+	}
+}
+
+// funcion imprimir Ordenes de pago (Comprobante)
+function printDivOrden(element) {
+	var printContents = '';
+	printContents += $('#' + element).html();
+	printHTML(printContents, 'printing-frame-' + (new Date()).getTime());
+}
+
+//funcion imprimir Ordenes de pago (Comprobante)
+function prepPrintCoupon(couponID){
+  originalContents = document.body.innerHTML;
+  coupon = couponID;
+  var navegador = detectIE();
+  
+  var printable = document.getElementById(couponID);
+  var printContents = '';
+  if(navegador == 8){
+    printContents = $('#personal-info').html();
+  }
+   printContents += printable.innerHTML;
+  document.body.innerHTML = printContents;
+  setTimeout(printCoupon,50);
+}
+function printCoupon(){
+	window.print();
+	setTimeout(endPrintCoupon,50);
+}
+function endPrintCoupon(){
+  document.body.innerHTML = originalContents;
+  document.getElementById(coupon).scrollIntoView(true);
+  var navegador = detectIE();
+
+  if(navegador != 8){
+  $( ".detalle" ).on("click", function() {
+		$(this).hide();
+		$('.swift').fadeIn();
+		$('.comprobante').fadeIn();
+		
+		$('.content-comprobante').hide();
+		$('.content-swift').hide();
+		$('.content-detalle').fadeIn();
+		
+		var divGral = $(this).parent().parent().parent().parent();
+		var divDet = divGral.find("[name='div-detalle']");
+		var id = '"'+divDet.attr("id")+'"';
+		var btnImprimir = $(this).parent().parent().find("li").eq(3);
+		btnImprimir.html("<button role='button' onclick='printDivModal("+id+")' class='button-element print print-modal'> <span class='icon'></span>Imprimir</button>");
+	});
+	$( ".swift" ).on("click", function() {
+		$(this).hide();
+		$('.detalle').fadeIn();
+		$('.comprobante').fadeIn();
+			
+		$('.content-detalle').hide();
+		$('.content-comprobante').hide();
+		$('.content-swift').fadeIn();
+		
+		var divGral = $(this).parent().parent().parent().parent();
+		var divSwift = divGral.find("[name='div-swift']");
+		var id = '"'+divSwift.attr("id")+'"';
+		var btnImprimir = $(this).parent().parent().find("li").eq(3);
+		btnImprimir.html("<button role='button' onclick='printDivModal("+id+")' class='button-element print print-modal'> <span class='icon'></span>Imprimir</button>");
+	});												
+	$( ".comprobante" ).on("click", function() {
+		
+		$(this).hide();
+		$('.detalle').fadeIn();
+		$('.swift').fadeIn();				
+		
+		$('.content-detalle').hide();
+		$('.content-swift').hide();
+		$('.content-comprobante').fadeIn();
+		
+		var divGral = $(this).parent().parent().parent().parent();
+		var divComp = divGral.find("[name='div-comprobante']");
+		var id = '"'+divComp.attr("id")+'"';
+		var btnImprimir = $(this).parent().parent().find("li").eq(3);
+		btnImprimir.html("<button role='button' onclick='printDivModal("+id+")' class='button-element print print-modal'> <span class='icon'></span>Imprimir</button>");
+	});
+	}else{
+		location.reload();
+	}
+
+	if(globalID == "printAreaComprobanteTOB" || globalID == "printAreaSwiftTOB" || globalID == "printAreaDetalleTOB"){
+		$('#modalTransOtroBanco').modal({backdrop: 'true'});
+	}
+	if (globalID == "printAreaComprobanteODP" || globalID == "printAreaSwiftODP" || globalID == "printAreaDetalleODP"){
+		$('#modalOrdenesPago').modal({backdrop: 'true'});
+	}
+
+	window.location.reload();
+}
+
+function printDivCuenta(element) {
+	globalID = element;
+	var navegador = detectIE();
+	var is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
+
+    if (navegador <= 11 && navegador != false) 
+    { 	
+    	if(navegador != 8){
+    		$(".modal-backdrop").remove();
+    	}
+    	prepPrintCuenta(element);
+
+    }else if(is_chrome){
+
+    $(".modal-backdrop").remove();
+	prepPrintCuenta(element);
+
+	}else{
+	
+	var printContents = '';
+	printContents += $('#' + element).html();
+	printHTML(printContents, 'printing-frame-' + (new Date()).getTime());
+	}
+}
+
+// funcion imprimir Ordenes de pago (Comprobante)
+function prepPrintCuenta(couponID){
+  originalContents = document.body.innerHTML;
+  coupon=couponID;
+  var navegador = detectIE();
+  
+  var printable = document.getElementById(couponID);
+  var printContents = '';
+  if(navegador == 8){
+    printContents = $('#personal-info').html();
+  }
+  printContents += printable.innerHTML;
+  document.body.innerHTML = printContents;
+  setTimeout(printCuenta,50);
+}
+function printCuenta(){
+	window.print();
+	setTimeout(endPrintCuenta,50);
+}
+function endPrintCuenta(){
+	document.body.innerHTML = originalContents;
+	document.getElementById(coupon).scrollIntoView(true);
+	window.location.reload();
+}
+
+function printHTML(content, strFrameName) {
+
+	var jFrame = $("<iframe name='" + strFrameName + "'>");
+    jFrame.css("width", "1px")
+            .css("height", "1px")
+            .css("position", "absolute")
+            .css("left", "-9999px")
+            .appendTo($("body:first"));
+
+    var objFrame = window.frames[ strFrameName ];
+    var objDoc = objFrame.document;
+
+    var jStyles = '';
+    $("link").each(function(e) {
+    	jStyles += this.outerHTML;
+    });
+
+    var html = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\
+                \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">";
+    html += "<html><head>" + jStyles + "</head><body style='height:auto;'>" + content + "</body></html>";
+
+    objDoc.open();
+    objDoc.write(html);
+    objDoc.close();
+
+    objFrame.focus();
+    objFrame.print();
+    
+    setTimeout(function() {
+        jFrame.remove();
+    }, (60 * 1000));
+}
+
+//Close message
+$(document).ready(function(){
+	$( ".btn-close" ).on("click", function() {
+		$(this).parent() .fadeOut('slow');
+	});
+	$( ".cerrar-aviso" ).on("click", function() {
+		$('.aviso-prestamos-preaprobado').fadeOut('slow');
+	});																							
+});
+
+
+
+//  select tipo de Moneda pago servicios 
+function monedaPago(id) {
+	if (id == "Pesos") {
+		$("#moneda-pago").attr("placeholder","Pesos");
+	}
+	if (id == "Dolares") {
+		$("#moneda-pago").attr("placeholder","Dolares");
+	}
+} 
+
+// limite para transferir a terceros
+function showContent() {
+		element = document.getElementById("info-limite");
+		check = document.getElementById("check");
+		if (check.checked) {
+				element.style.display='block';
+				$('#btn-limite').fadeIn();
+		}
+		else {
+				element.style.display='none';
+				$('#btn-limite').fadeOut();
+		}
+}
+
+// habilitaci�n - inhabilitaci�n de funcionalidad de compra con IBC
+function showhidediv(rad){
+	var rads=document.getElementsByName(rad.name);
+	document.getElementById('info-paso-habilitar').style.display=(rads[1].checked)?'block':'none';
+}
+
+// habilitar boton guardar aviso sms 
+$(document).ready(function(){	
+	$('.check-habilita-btn-1 input[type="checkbox"]').on("click", function(){
+		if($(this).attr("value")=="1"){
+				$(".btn-guardar-1 .cont-btn-guardar").show();
+		}
+	});
+	$('.check-habilita-btn-2 input[type="checkbox"]').on("click", function(){
+		if($(this).attr("value")=="1"){
+				$(".btn-guardar-2 .cont-btn-guardar").show();
+		}
+	});
+	$('.check-habilita-btn-3 input[type="checkbox"]').on("click", function(){
+		if($(this).attr("value")=="1"){
+				$(".btn-guardar-3 .cont-btn-guardar").show();
+		}
+	});
+	$('.check-habilita-btn-4 input[type="checkbox"]').on("click", function(){
+		if($(this).attr("value")=="1"){
+				$(".btn-guardar-4 .cont-btn-guardar").show();
+		}
+	});
+	$('.check-habilita-btn-5 input[type="checkbox"]').on("click", function(){
+		if($(this).attr("value")=="1"){
+				$(".btn-guardar-5 .cont-btn-guardar").show();
+		}
+	});
+	$('.check-habilita-btn-6 input[type="checkbox"]').on("click", function(){
+		if($(this).attr("value")=="1"){
+				$(".btn-guardar-6 .cont-btn-guardar").show();
+		}
+	});	
+});
+
+//detalle comprobante
+$(document).ready(function(){
+	$( ".detalle" ).on("click", function() {
+		
+		$(this).hide();
+		$('.swift').fadeIn();
+		$('.comprobante').fadeIn();
+		
+		$('.content-comprobante').hide();
+		$('.content-swift').hide();
+		$('.content-detalle').fadeIn();
+	});
+	$( ".swift" ).on("click", function() {
+		
+		$(this).hide();
+		$('.detalle').fadeIn();
+		$('.comprobante').fadeIn();
+	
+		
+		$('.content-detalle').hide();
+		$('.content-comprobante').hide();
+		$('.content-swift').fadeIn();
+	});												
+	$( ".comprobante" ).on("click", function() {
+		
+		$(this).hide();
+		$('.detalle').fadeIn();
+		$('.swift').fadeIn();				
+		
+		$('.content-detalle').hide();
+		$('.content-swift').hide();
+		$('.content-comprobante').fadeIn();
+		
+	});																									
+});
+
+// Transforma el input a minuscula si tiene la clase lowerCase
+// Es util para validar direcciones de email.
+$(document).ready(function(){
+	$('input.lowerCase').on("focusout", function() {
+	    $( this ).val($( this ).val().toLowerCase());
+	});																						
+});
+
+
+//Préstamos Amortizables
+$(document).ready(function(){
+	$( "#btn_calcular_pesos" ).on("click", function() {
+		$('.result-amortizables').fadeIn();
+	});																							
+});
+
+//Pr�stamos Amortizables Pre Aprobados
+$(document).ready(function(){
+	$( "#btn_calcular" ).on("click", function() {
+		$('.result-amortizables-pre-aprobados').fadeIn();
+	});																							
+});
+
+//Pago Numero de Aduana por Rut
+$(document).ready(function(){
+	$( "#id-rut1" ).on("click", function() {
+		$(".content-divs-info-dua").hide();
+		$('.cont1-dua-rut').show();
+	});	
+	$( "#id-rut2" ).on("click", function() {
+		$(".content-divs-info-dua").hide();
+		$('.cont2-dua-rut').show();
+	});																								
+});
+
+//Numero de la factura pagar (Pago de la factura) 
+$(document).ready(function(){
+	var image = '<img src="img/dynamic/factura-img.gif"">';
+	$('#popover').popover({placement: 'top', content: image, html: true});
+	$("#popover").on("mouseenter", function() {
+		document.getElementById("numer-ref").show();
+	}).on("mouseleave", function() {
+		document.getElementById("numer-ref").hide();
+	});																	
+});
+
+//Combobox Pagos
+	$(document).ready(function(){ //ESTO LO AGREGE YO CAMILO DE PRUEBA PERO NO FUNCIONO
+		$('.ui-menu-item').attr('data-toggle', 'modal');
+	}); 
+	(function( $ ) {
+		$.widget( "custom.combobox", {
+			_create: function() {
+				this.wrapper = $( "<span>" )
+					.addClass( "custom-combobox" )
+					.insertAfter( this.element );
+
+				this.element.hide();
+				this._createAutocomplete();
+				this._createShowAllButton();
+			},
+
+			_createAutocomplete: function() {
+				var selected = this.element.children( ":selected" ),
+					value = selected.val() ? selected.text() : "";
+
+				this.input = $( "<input>" )
+					.appendTo( this.wrapper )
+					.val( value )
+					.attr( "title", "" )
+					.attr( "placeholder", "Ingres\u00E1 un servicio" )
+					.addClass( "custom-combobox-input ui-widget ui-widget-content ui-state-default ui-corner-left" )
+					.autocomplete({
+						delay: 0,
+						minLength: 0,
+						source: $.proxy( this, "_source" )
+					})
+					.tooltip({
+						classes: {
+							"ui-tooltip": "ui-state-highlight"
+						}
+					});
+
+				this._on( this.input, {
+					autocompleteselect: function( event, ui ) {
+						ui.item.option.selected = true;
+						this._trigger( "select", event, {
+							item: ui.item.option
+						});
+					},
+
+					autocompletechange: "_removeIfInvalid"
+				});
+			},
+
+			_createShowAllButton: function() {
+				var input = this.input,
+					wasOpen = false;
+
+				$( "<a>" )
+					.attr( "tabIndex", -1 )
+					//.attr( "title", "Seleccion� un servicio" )
+					.tooltip()
+					.appendTo( this.wrapper )
+					.button({
+						icons: {
+							primary: "ui-icon-triangle-1-s"
+						},
+						text: false
+					})
+					.removeClass( "ui-corner-all" )
+					.addClass( "custom-combobox-toggle ui-corner-right" )
+					.on( "mousedown", function() {
+						wasOpen = input.autocomplete( "widget" ).is( ":visible" );
+					})
+					.on( "click", function() {
+						input.trigger( "focus" );
+
+						// Close if already visible
+						if ( wasOpen ) {
+							return;
+						}
+
+						// Pass empty string as value to search for, displaying all results
+						input.autocomplete( "search", "" );
+					});
+			},
+
+			_source: function( request, response ) {
+				var matcher = new RegExp( $.ui.autocomplete.escapeRegex(request.term), "i" );
+				response( this.element.children( "option" ).map(function() {
+					var text = $( this ).text();
+					if ( this.value && ( !request.term || matcher.test(text) ) )
+						return {
+							label: text,
+							value: text,
+							option: this
+						};
+				}) );
+			},
+
+			_removeIfInvalid: function( event, ui ) {
+
+				// Selected an item, nothing to do
+				if ( ui.item ) {
+					return;
+				}
+
+				// Search for a match (case-insensitive)
+				var value = this.input.val(),
+					valueLowerCase = value.toLowerCase(),
+					valid = false;
+				this.element.children( "option" ).each(function() {
+					if ( $( this ).text().toLowerCase() === valueLowerCase ) {
+						this.selected = valid = true;
+						return false;
+					}
+				});
+
+				// Found a match, nothing to do
+				if ( valid ) {
+					return;
+				}
+
+				// Remove invalid value
+				this.input
+					.val( "" )
+					.attr( "title", value + " didn't match any item" )
+					.tooltip( "open" );
+				this.element.val( "" );
+				this._delay(function() {
+					this.input.tooltip( "close" ).attr( "title", "" );
+				}, 2500 );
+				this.input.autocomplete( "instance" ).term = "";
+			},
+
+			_destroy: function() {
+				this.wrapper.remove();
+				this.element.show();
+			}
+		});
+	})( jQuery );
+
+	$(function() {	
+		$(".combobox")
+		.combobox()
+		.on('comboboxselect', function(e, selected) {
+		$(selected.item).trigger('click');
+		$( ".custom-combobox-input" ).removeClass('empty');
+		});		
+		$( "#toggle" ).on( "click", function() {
+			$( ".combobox" ).toggle();
+		});
+		//Servicios publicos
+		$("#combobox-servicios-publicos")
+		.combobox()
+		.on('comboboxselect', function(e, selected) {
+		$(selected.item).trigger('click');
+			$( ".custom-combobox-input" ).removeClass('empty');
+		});
+		
+		$( "#toggle" ).on( "click", function() {
+			$( "#combobox-servicios-publicos" ).toggle();
+		});
+		//Aviso Sms E-mail
+		$(".select-aviso").on("change", function(){
+        $(this).find("option:selected").each(function(){
+            if($(this).attr("value")=="opcion1"){
+                $(".opcion1-cont").show();
+								$(".opcion2-cont").hide();
+								$(".opcion3-cont").hide();
+								$(".opcion4-cont").hide();
+								$(".opcion5-cont").hide();
+								$(".opcion6-cont").hide();
+            }
+            else if($(this).attr("value")=="opcion2"){
+                $(".opcion1-cont").hide();
+								$(".opcion2-cont").show();
+								$(".opcion3-cont").hide();
+								$(".opcion4-cont").hide();
+								$(".opcion5-cont").hide();
+								$(".opcion6-cont").hide();
+            }
+						else if($(this).attr("value")=="opcion3"){
+                $(".opcion1-cont").hide();
+								$(".opcion2-cont").hide();
+								$(".opcion3-cont").show();
+								$(".opcion4-cont").hide();
+								$(".opcion5-cont").hide();
+								$(".opcion6-cont").hide();
+            }						
+            else if($(this).attr("value")=="opcion4"){
+                $(".opcion1-cont").hide();
+								$(".opcion2-cont").hide();
+								$(".opcion3-cont").hide();
+								$(".opcion4-cont").show();
+								$(".opcion5-cont").hide();
+								$(".opcion6-cont").hide();
+            }
+            else if($(this).attr("value")=="opcion5"){
+                $(".opcion1-cont").hide();
+								$(".opcion2-cont").hide();
+								$(".opcion3-cont").hide();
+								$(".opcion4-cont").hide();
+								$(".opcion5-cont").show();
+								$(".opcion6-cont").hide();
+            }	
+						else if($(this).attr("value")=="opcion6"){
+                $(".opcion1-cont").hide();
+								$(".opcion2-cont").hide();
+								$(".opcion3-cont").hide();
+								$(".opcion4-cont").hide();
+								$(".opcion5-cont").hide();
+								$(".opcion6-cont").show();
+            }												
+            else{
+                $(".box").hide();
+            }
+        });
+    }).change();		
+	});
+	$(document).ready(function(){
+		$( ".custom-combobox-input" ).on("keyup", function() {
+			if (this.value == '') 
+				$(this).addClass('empty');
+			else 
+				$(this).removeClass('empty');
+		}).addClass('empty');
+
+		$( ".icon-retirar" ).on("click", function() {
+			$('.combobox').select(0);
+			$( ".custom-combobox-input, .comboboxselect" ).addClass('empty');			
+			$(".custom-combobox-input").val('');
+			$(".element-hide").hide();
+			//Aviso sms e-mail
+			$("#btn-continuar").hide();
+			$(".checkbox-terminos, #combobox-aviso-sms-e-mail option").prop("checked", "");
+		});
+	});
+
+//Servicios p�blicos alta a d�bito bancario
+$(document).ready(function(){ 
+	$( ".debito-publico-ancel" ).on("click", function() { $('.alta-publicos').hide(); $('.alta-debito-publico-ancel-cont').fadeIn(); });
+	$( ".debito-publico-anep" ).on("click", function() { $('.alta-publicos').hide(); $('.alta-debito-publico-anep-cont').fadeIn(); });
+	$( ".debito-publico-antel" ).on("click", function() { $('.alta-publicos').hide(); $('.alta-debito-publico-antel-cont').fadeIn(); });
+	$( ".debito-publico-bps" ).on("click", function() { $('.alta-publicos').hide(); $('.alta-debito-publico-bps-cont').fadeIn(); });
+	$( ".debito-publico-spr" ).on("click", function() { $('.alta-publicos').hide(); $('.alta-debito-publico-spr-cont').fadeIn(); });
+	$( ".debito-publico-bse" ).on("click", function() { $('.alta-publicos').hide(); $('.alta-debito-publico-bse-cont').fadeIn(); });
+	$( ".debito-publico-im-maldonado" ).on("click", function() { $('.alta-publicos').hide(); $('.alta-debito-publico-im-maldonado-cont').fadeIn(); });
+	$( ".debito-publico-im-montevideo" ).on("click", function() { $('.alta-publicos').hide(); $('.alta-debito-publico-im-montevideo-cont').fadeIn(); });
+	$( ".debito-publico-ose" ).on("click", function() { $('.alta-publicos').hide(); $('.alta-debito-publico-ose-cont').fadeIn(); });
+	$( ".debito-publico-ute" ).on("click", function() { $('.alta-publicos').hide(); $('.alta-debito-publico-ute-cont').fadeIn(); });
+});
+
+//Mostrar elemento oculto sobre opci�n combobox gen�rico
+$(document).ready(function(){ 
+	$( ".opcion1" ).on("click", function() { $('.element-hide').hide(); $('.opcion1-cont').fadeIn(); });
+	$( ".opcion2" ).on("click", function() { $('.element-hide').hide(); $('.opcion2-cont').fadeIn(); });
+	$( ".opcion3" ).on("click", function() { $('.element-hide').hide(); $('.opcion3-cont').fadeIn(); });
+	$( ".opcion4" ).on("click", function() { $('.element-hide').hide(); $('.opcion4-cont').fadeIn(); });
+	$( ".opcion5" ).on("click", function() { $('.element-hide').hide(); $('.opcion5-cont').fadeIn(); });
+	$( ".opcion6" ).on("click", function() { $('.element-hide').hide(); $('.opcion6-cont').fadeIn(); });
+	$( ".opcion7" ).on("click", function() { $('.element-hide').hide(); $('.opcion7-cont').fadeIn(); });
+	$( ".opcion8" ).on("click", function() { $('.element-hide').hide(); $('.opcion8-cont').fadeIn(); });
+	$( ".opcion9" ).on("click", function() { $('.element-hide').hide(); $('.opcion9-cont').fadeIn(); });
+	$( ".opcion10" ).on("click", function() { $('.element-hide').hide(); $('.opcion10-cont').fadeIn(); });	
+});
+
+//Hover menu header
+$(".menu-head").on("mouseenter", function(){
+	if (window.innerWidth>992){
+		$(".menu-ul", this).css("top", "0px");
+		$(".menu-header").css("width", "451px");
+	}
+    }).on("mouseleave", function(){
+		$("ul", this).css("top", "-5100px");
+		$(".menu-header").css("width", "171px");		
+});
+//Hover menu 2 columnas header
+$(".colum2-menu").on("mouseenter", function(){
+	if (window.innerWidth>992){
+		$(".menu-ul", this).css("top", "0px");
+		$(".menu-header").css("width", "710px");
+	}
+    }).on("mouseleave", function(){
+		$(".menu-ul", this).css("top", "-5100px");
+		$(".menu-header").css("width", "171px");		
+});
+
+//Administraci�n de beneficiarios precargados modal desde select option
+$(document).ready(function () {
+	$('#selectBox').on("change", function () {
+		var $selected = $(this).find('option:selected');
+		var modalTrigger = $selected.data('open');
+		$("#" + modalTrigger).trigger('click');
+	});
+});
+
+//Placeholder IE 8
+var isInputSupported = 'placeholder' in document.createElement('input');
+var isTextareaSupported = 'placeholder' in document.createElement('textarea');
+if (!isInputSupported || !isTextareaSupported) {
+		$('[placeholder]').on("focus", function () {
+				var input = $(this);
+				if (input.val() == input.attr('placeholder') && input.data('placeholder')) {
+						input.val('');
+						input.removeClass('placeholder');
+				}
+		}).on("blur", function () {
+				var input = $(this);
+				if (input.val() == '') {
+						input.addClass('placeholder');
+						input.val(input.attr('placeholder'));
+						input.data('placeholder', true);
+				} else {
+						input.data('placeholder', false);
+				}
+		}).blur().parents('form').submit(function () {
+				$(this).find('[placeholder]').each(function () {
+						var input = $(this);
+						if (input.val() == input.attr('placeholder') && input.data('placeholder')) {
+								input.val('');
+						}
+				});
+		});
+}
+					
+//tooltip 
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip();
+});
+
+//No enviar estado de cuenta por correo com�n    
+function checkUncheck() { 
+		$('.checkbox-no-envio').on("click", function() {
+				if (this.checked) {
+						$(".cambio-domicilio-correspond .campo-mail").removeAttr('disabled', 'disabled');
+						$(".cambio-domicilio-correspond .check-term").removeAttr('disabled', 'disabled');
+				} else {
+						$(".cambio-domicilio-correspond .campo-mail").attr('disabled', 'disabled');
+						$(".cambio-domicilio-correspond .check-term").attr('disabled', 'disabled');		
+				}
+		}); 
+};
+
+//No enviar estado de cuenta por correo com�n cierre Mensual    
+function checkUncheckCierre() { 
+		$('.checkbox-no-envio').on("click", function() {
+				if (this.checked) {
+						$(".cierre-mensual-info-correspondencia .campo-mail").removeAttr('disabled', 'disabled');
+						$(".cierre-mensual-info-correspondencia .check-term").removeAttr('disabled', 'disabled');
+				} else {
+						$(".cierre-mensual-info-correspondencia .campo-mail").attr('disabled', 'disabled');
+						$(".cierre-mensual-info-correspondencia .check-term").attr('disabled', 'disabled');		
+				}
+		}); 
+};
+
+//Aviso por mail cierre mensual estado de cuenta
+		$('.radio-cierra-mensual input[type="radio"]').on("click", function(){
+        if($(this).attr("value")=="1"){
+            $(".aviso-cierre-mensual .campo-mail").removeAttr('disabled', 'disabled');
+						$(".accepts-conditions .check-term").removeAttr('disabled', 'disabled');
+        }
+        if($(this).attr("value")=="2"){
+            $(".aviso-cierre-mensual .campo-mail").attr('disabled', 'disabled');
+						$(".accepts-conditions .check-term").attr('disabled', 'disabled');
+        }
+    });
+		
+		$(".cambio-domicilio-correspond .campo-mail").attr('disabled', 'disabled'); 
+		$(".cambio-domicilio-correspond .check-term").attr('disabled', 'disabled');	
+		function checkUncheck() { 
+		$('.checkbox-no-envio').on("click", function() {
+				if (this.checked) {
+						$(".cambio-domicilio-correspond .campo-mail").removeAttr('disabled', 'disabled');
+						$(".cambio-domicilio-correspond .check-term").removeAttr('disabled', 'disabled');
+				} else {
+						$(".cambio-domicilio-correspond .campo-mail").attr('disabled', 'disabled');
+						$(".cambio-domicilio-correspond .check-term").attr('disabled', 'disabled');		
+				}
+		}); 
+};
+			
+//Aviso sms e-mail
+$(document).ready(function(){ 
+	$( ".servicio-info .opcion" ).on("click", function() {
+		$('#btn-continuar').hide(); 
+	});
+	//Editar / Guardar datos contacto Cel
+	$( ".edit" ).on("click", function() {
+		$('.text-data').hide();
+		$(".guardar").fadeIn();
+		$('.edit').hide();
+		$(".campo-data").fadeIn();	
+	});	
+	$( ".guardar" ).on("click", function() {
+		$('.text-data').fadeIn();
+		$(".guardar").hide();
+		$('.edit').fadeIn();
+		$(".campo-data").hide();
+	});
+});
+
+//Seguros
+function formOnChange(sel) {
+      if (sel.value=="asistencia-al-viajero"){
+           $(".formulario1").hide();
+           $(".formulario2").show();
+      }else{
+           $(".formulario1").show();
+           $(".formulario2").hide();
+      }
+};
+
+//Servicios privados alta a d�bito bancario
+$(document).ready(function(){ 
+	$( ".servicio-alta-privados" ).on("click", function() { $('.alta-debito-privados-cont').fadeIn(); });
+});
+	
+//Agregar cuenta PayPal
+$(document).ready(function(){
+	$( "#agregar-cuenta-paypal" ).on("click", function() {
+		$('#add-cuenta').fadeIn();
+	});
+	$( ".delete-account-paypal" ).on("click", function() {
+		$(this).parents('tr').hide(); 
+	});									
+});
+
+function showContent() {
+		element = document.getElementById("content");
+		check = document.getElementById("check");
+		if (check.checked) {
+				element.style.display='block';
+		}
+		else {
+				element.style.display='none';
+		}
+}
+
+//Pago Facturas
+$(document).ready(function(){
+	$( ".Ute, .Ose, .Antel" ).on("click", function() {
+		$('.numero-factura').fadeIn();
+	});									
+});
+
+// Aviso por viaje mostrando cuentas para seleccionar
+function toggle(elemento) {
+if(elemento.value=="a") {
+		document.getElementById("list-cuentas").style.display = "block";
+}else{
+		 if(elemento.value=="b"){
+				 document.getElementById("list-cuentas").style.display = "none";
+		};
+	};
+};
+
+//datepicker Aviso por viaje
+$(document).ready(function() {
+  $('#datePicker, #datePicker2')
+        .datepicker({
+            format: 'dd/mm/yyyy'
+        })
+        .on('changeDate', function(e) {
+            if (this.id == "datePicker") {
+            	$(this).data('datepicker').hide();
+            	$("#datePicker2").data('datepicker').setStartDate(e.date);
+            }
+			if (this.id == "datePicker2") {
+            	$(this).data('datepicker').hide();
+            	$("#datePicker").data('datepicker').setEndDate(e.date);
+            }
+        });
+  
+  $('#datePickerFechaNacimiento')
+	  .datepicker({
+		  format: 'dd/mm/yyyy'
+	  }).on('changeDate', function(e) {
+	      $(this).data('datepicker').hide();
+	  });
+
+  $('#datePickerFechaEnvioEspecial')
+	  .datepicker({
+		  format: 'dd/mm/yyyy'
+	  }).on('changeDate', function(e) {
+	      $(this).data('datepicker').hide();
+	  });
+/*
+$('#eventForm').formValidation({
+      framework: 'bootstrap',
+      icon: {
+          valid: 'glyphicon glyphicon-ok',
+          invalid: 'glyphicon glyphicon-remove',
+          validating: 'glyphicon glyphicon-refresh'
+      },
+      fields: {
+          name: {
+              validators: {
+                  notEmpty: {
+                      message: 'The name is required'
+                  }
+              }
+          },
+          date: {
+              validators: {
+                  notEmpty: {
+                      message: 'The date is required'
+                  },
+                  date: {
+                      format: 'DD/MM/YYYY',
+                      message: 'The date is not a valid'
+                  }
+              }
+          }
+      }
+  });*/
+});
+
+//Tarjetas Pago de Tarjetas
+function toggleSelect()
+{
+	if (document.getElementById("chk1").checked == true) {
+		document.frm1.cuentaDolaresString.disabled = true;
+	} else {
+		document.getElementById("select1").disabled = false;
+	}
+}

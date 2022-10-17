@@ -1,0 +1,97 @@
+var ventanas = [
+		{
+			"nombre": "A",
+			"timeout": 5,
+			"cantidadRepeticiones": 12
+		},
+		{
+			"nombre": "B",
+			"timeout": 10,
+			"cantidadRepeticiones": 6
+		},
+		{
+			"nombre": "C",
+			"timeout": 20,
+			"cantidadRepeticiones": 3
+		},
+		{
+			"nombre": "D",
+			"timeout": 30,
+			"cantidadRepeticiones": 4
+		}
+];
+
+var idTimeOut;
+
+function iniciarLogicaVentanas(estadoPoolAjax, primeraVez) {
+    var datosVentanaActual = getVentanaByName(estadoPoolAjax.ventana);
+    timer(eventoNotificaciones, datosVentanaActual.timeout, primeraVez);
+}
+
+function getVentanaByName(nombreVentana){
+	var ventanaElegida = null;
+	$.each(ventanas, function(index, item){
+		if(nombreVentana == item.nombre){
+			ventanaElegida = item;
+			return false;
+		}
+	})
+
+	return ventanaElegida;
+}
+
+function getPosicionVentanaByName(nombreVentana){
+	var i = null;
+	$.each(ventanas, function(index, item){		
+		if(nombreVentana == item.nombre){
+			i = index;
+			return false;
+		}
+	})
+
+	return i;
+}
+
+//Orden de la proxima bandera A->B->C->D
+function getProximaVentana(nombreVentanaActual){
+	var posicionVentanaActual = getPosicionVentanaByName(nombreVentanaActual);
+	return ventanas[posicionVentanaActual + 1];
+}
+
+function isUltimaVentana(nombreVentanaActual){
+	return nombreVentanaActual == "D";
+}
+
+function actualizarIntentosEstadoPoolAjax(estadoPoolAjax){
+	estadoPoolAjax.intentos = estadoPoolAjax.intentos + 1;
+}
+
+function timer(callback, timeout, primeraVez) {
+	var timeoutFinal = primeraVez ? 5 : timeout;
+	idTimeOut =  setTimeout(function() {
+    	callback();
+        var datosVentanaActual = getVentanaByName(estadoPoolAjax.ventana);
+        if (estadoPoolAjax.intentos < datosVentanaActual.cantidadRepeticiones) {
+            actualizarIntentosEstadoPoolAjax(estadoPoolAjax);
+            timer(callback, datosVentanaActual.timeout, false); 
+        }
+        else{
+            if(!isUltimaVentana(datosVentanaActual.nombre)){
+                var proximaVentana = getProximaVentana(estadoPoolAjax.ventana);
+                cleanDatosEstadoPoolAjax(proximaVentana);
+                timer(callback, proximaVentana.timeout, false);
+            }
+        }
+    }, timeoutFinal *1000);
+}
+
+function cleanDatosEstadoPoolAjax(ventana){
+	estadoPoolAjax.ventana = ventana.nombre;
+    estadoPoolAjax.intentos = 1;
+}
+
+function resetTimer(){
+    clearTimeout(idTimeOut);
+    var datosVentanaActual = getVentanaByName(estadoPoolAjax.ventana);
+    timer(eventoNotificaciones, datosVentanaActual.timeout);
+}

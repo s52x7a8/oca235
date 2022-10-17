@@ -1,0 +1,874 @@
+var inAjaxRequest = false;
+
+var pramNoDisponibleMsg = 'En este momento no tienes un prestamo disponible';
+
+var ajaxFunctionOnClick = function(){
+	var action = $(this).attr("data-action");
+	var dataFunction = $(this).attr("data-function");
+	var dataError = $(this).attr("data-error");
+	executeAjax(action, dataFunction, $(this), "{}", dataError);
+};
+
+$(document).ready(function(){
+	$(".ajaxExecute").on("click", ajaxFunctionOnClick);
+});
+
+$(document).on("focus", "input[name*='importe']", function(){
+  $(this).val('');
+});
+
+$(document).on("focus", "input[name*='montoApagar']", function(){
+  $(this).val('');
+});
+
+function executeAjax(action, dataFunction, obj, dataContent, errorFunction, ignoreShowModal, ignoreHideModal, extra){
+	if (!inAjaxRequest){		
+		inAjaxRequest = true;
+		if(!ignoreShowModal)
+			$("#modalLoading").modal('show');
+		if (dataContent == undefined)
+			dataContent = { };
+		$.ajax({
+	    	url: action,
+	    	type:'post',
+	    	dataType: 'json',
+	    	data: dataContent,
+	    	timeout: 60000,
+	    	contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+	        success: function(data) {
+	        	inAjaxRequest = false;
+				if(!ignoreHideModal)
+					$("#modalLoading").modal('hide');
+	        	if (data.ocalink_msg.data.error != undefined)
+	        		window[errorFunction].call(obj, data.ocalink_msg.data.error);
+	        	else
+	        		window[dataFunction].call(obj, data, extra);
+	        },
+	        error: function(data,b,c) {
+	        	inAjaxRequest = false;
+				if(!ignoreHideModal)
+					$("#modalLoading").modal('hide');
+	        	if (data.status == 403 || data.status == 409) {
+	        		window.location.assign(window.location.protocol + "//" + window.location.host + "/trx/login");
+	        	} else{
+	        		window[errorFunction].call(obj);
+	        	}
+	        }
+		});
+	}
+}
+
+function showErrorFromCode(error) {
+	var errorCode = error.code;
+	if(errorCode === undefined || errorCode.length === 0) {
+		showDefaultError(error);
+	} else {
+		window["show" + errorCode + "Error"].call(null, error);
+	}
+
+}
+
+function stripAccents(text) {
+	return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function sendErrorToAnalytics(errorMsg) {
+	if(analyticsLib && analyticsLib.setData && analyticsLib.trackState) {
+		analyticsLib.setData('custom', {
+			"internaltracking": "",
+			"errorname": errorMsg
+		});
+		analyticsLib.trackState(null, null);
+	}
+}
+
+function sendPramErrorToAnalytics(errorMsg) {
+	if(analyticsLib && analyticsLib.trackAction) {
+		analyticsLib.trackAction({
+			"customCategory": "Body | Card | Center",
+			"customAction": "Show",
+			"customLabel": "PrestamoNoDisponible",
+			"customValue": errorMsg,
+			"message": errorMsg
+		});
+	}
+}
+
+function showDefaultError(error){
+	var errorMsg = null;
+	if(error === undefined) {
+		errorMsg = 'Ha ocurrido un error inesperado. Te sugerimos vuelvas a intentar y si el error persiste, te comuniques al 1730 y nos reportes el problema. Muchas gracias.';
+	} else {
+		errorMsg = (error.message === undefined) ? error : error.message;
+	}
+	
+	$('#modalErrorMsg').html(errorMsg);
+	$('#modalError').modal('toggle');
+	
+	if (stripAccents(errorMsg) == pramNoDisponibleMsg) {
+		setTimeout(function(){
+			sendPramErrorToAnalytics(errorMsg);
+		}, 1000);
+	} else {
+		sendErrorToAnalytics(errorMsg);
+	}
+}
+
+
+
+function showDefaultErrorLogin(error){
+	var errorMsg = null;
+	if(error === undefined) {
+		errorMsg = 'Ha ocurrido un error inesperado. Te sugerimos vuelvas a intentar y si el error persiste, te comuniques al 1730 y nos reportes el problema. Muchas gracias.';
+	} else {
+		errorMsg = (error.message === undefined) ? error : error.message;
+	}
+
+	$('#modalErrorLoginMsg').html(errorMsg);
+	$('#modalErrorLogin').modal('toggle');
+	
+	setTimeout(function(){
+		analyticsLib.trackAction({
+			"customCategory": "Lightbox | Warning | Center",
+			"customAction": "Show",
+			"customLabel": "ErrorContrasena",
+			"customValue": errorMsg
+		});
+	},1000);
+}
+
+
+function show20048Error(error) {
+	var highlightInvalidFunction = window["highlightInvalidAccounts"];
+	
+	if(highlightInvalidFunction !== undefined){
+		var mensaje = [
+				"Cuenta no habilitada en este momento para recibir transferencias.", 
+				"Cuenta inexistente o no habilitada", 
+				"Supera el l\u00EDmite diario de transferencias.", 
+				"Todas las cuentas de destino de una transferencia m\u00FAltiple, deben ser en la misma moneda", 
+				"Cuenta Recaudadora. Para realizar un pago en esta cuenta deb\u00E9s ingresar por la opci\u00F3n 'Servicios' luego de cliquear el bot\u00F3n 'Pagos' que se encuentra en la p\u00E1gina de Inicio"
+		];
+		var idsCuentasInvalidas = error.message.split('|');
+		highlightInvalidFunction.call(null, idsCuentasInvalidas,mensaje);
+	}
+}
+
+
+function show20014Error(error) {
+	var highlightInvalidFunction = window["highlightInvalidAccounts"];
+	
+	if(highlightInvalidFunction !== undefined){
+		var mensaje = [
+		        "",
+		        "",
+		        "",
+		        "",
+		        "Cuenta Recaudadora. Para realizar un pago en esta cuenta deb\u00E9s ingresar por la opci\u00F3n 'Servicios' luego de cliquear el bot\u00F3n 'Pagos' que se encuentra en la p\u00E1gina de Inicio"
+		];
+		var idsCuentasInvalidas = error.message.split('|');
+		highlightInvalidFunction.call(null, idsCuentasInvalidas,msj);
+	}
+}
+
+function formatMes(mes) {
+	if ("ENE" == mes)
+		return "Enero";
+	else if ("FEB" == mes)
+		return "Febrero";
+	else if ("MAR" == mes)
+		return "Marzo";
+	else if ("ABR" == mes)
+		return "Abril";
+	else if ("MAY" == mes)
+		return "Mayo";
+	else if ("JUN" == mes)
+		return "Junio";
+	else if ("JUL" == mes)
+		return "Julio";
+	else if ("AGO" == mes)
+		return "Agosto";
+	else if ("SEP" == mes)
+		return "Septiembre";
+	else if ("OCT" == mes)
+		return "Octubre";
+	else if ("NOV" == mes)
+		return "Noviembre";
+	else if ("DIC" == mes)
+		return "Diciembre";
+	else if("JAN" == mes)
+		return "Enero";
+	else if("APR" == mes)
+		return "Abril";
+	else if("AUG" == mes)
+		return "Agosto";
+	else if("DEC" == mes)
+		return "Diciembre";
+	else
+		return "";
+}
+
+function formatMoney (number, cantDecimales, separadorDecimales, separadorMiles){
+	number = parseFloat(number),
+	cantDecimales = isNaN(cantDecimales = Math.abs(cantDecimales)) ? 2 : cantDecimales, 
+	separadorDecimales = separadorDecimales == undefined ? "," : separadorDecimales, 
+	separadorMiles = separadorMiles == undefined ? "." : separadorMiles, 
+	s = number < 0 ? "-" : "", 
+	i = parseInt(number = Math.abs(+number || 0).toFixed(cantDecimales)) + "", 
+	j = (j = i.length) > 3 ? j % 3 : 0;
+	return s + (j ? i.substr(0, j) + separadorMiles : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + separadorMiles) + (cantDecimales ? separadorDecimales + Math.abs(number - i).toFixed(cantDecimales).slice(2) : "");
+};
+
+function formatText(text, format) {
+	if (text == undefined || text == "" || format == undefined || format == "") {
+		return "";
+	}
+	var formateado = text.trim();
+	switch(format) {
+		case "cedula":
+			if (text.length == 8)
+				formateado = text.substring(0,7) + "-" + text.substring(7);
+			if (text.length == 7)
+				formateado = text.substring(0,6) + "-" + text.substring(6);
+			break;
+		case "tarjeta":
+			if (text.length == 4)
+				formateado = "**** " + text;
+			if (text.length == 16)
+				formateado = "**** " + text.substring(12);
+			break;
+		case "tarjetaPegado":
+			if (text.length == 16)
+				formateado = text.substring(0,4) + " " + text.substring(4,8) + " " + text.substring(8,12) + " " + text.substring(12);
+			break;
+		case "telefono":
+			if (text.length == 8)
+				formateado = text.substring(0,4) + " " + text.substring(4);
+			else if (text.equals("0"))
+				formateado = "";
+			break;
+		case "celular":
+			if (text.length == 9)
+				formateado = text.substring(0,3) + " " + text.substring(3,6) + " " + text.substring(6);
+			break;
+		case "cambiarCase":
+			var splitted = text.split(" ");
+			var separador = "";
+			formateado = "";
+			for (var i = 0; i < splitted.length; i++) {
+				if (splitted[i].length == 0) 
+					continue;
+				if (splitted[i].length == 1) {
+					formateado += separador + splitted[i].toUpperCase();
+				} else {
+					formateado += separador + splitted[i].substring(0,1).toUpperCase() + splitted[i].substring(1).toLowerCase();
+				}
+				separador = " ";
+			}
+			break;
+		default:
+			break;
+	}
+	return formateado;
+}
+
+// parsea fechas con formato ddMMMaa a formato ddmmaa
+function parseDateddMMMaaToddmmaa(date){
+	if (date == null)
+		return "";
+	var anio;
+	if (date.length == 9)
+		anio = date.substring(7,9);
+	else
+		anio = date.substring(5,7);
+	return date.substring(0,2) + "-" + getMesAAAto99(date.substring(2,5)) + "-" + anio;
+}
+
+function getMesAAAto99(mes){
+	switch (mes){
+	case "ENE" :
+		return "01";
+	case "FEB" :
+		return "02";
+	case "MAR" :
+		return "03";
+	case "ABR" :
+		return "04";
+	case "MAY" :
+		return "05";
+	case "JUN" :
+		return "06";
+	case "JUL" :
+		return "07";
+	case "AGO" :
+		return "08";
+	case "SEP" :
+		return "09";
+	case "OCT" :
+		return "10";
+	case "NOV" :
+		return "11";
+	case "DIC" :
+		return "12";
+	case "JAN" :
+		return "01";
+	case "APR" :
+		return "04";		
+	case "AUG" :
+		return "08";
+	case "DEC" :
+		return "12";
+	}
+}
+
+// parsea fechas con formato aammdd a formato ddMMMaaa
+function parseDate(date){
+	if (date == null)
+		return "";
+	return date.substring(4,6) + getMes(date.substring(2,4)) + getAnio(date.substring(0,2));
+}
+
+function getMes(mes) {
+	switch (mes){
+	case "01" : case "1":
+		return "ENE";
+	case "02" : case "2":
+		return "FEB";
+	case "03" : case "3":
+		return "MAR";
+	case "04" : case "4":
+		return "ABR";
+	case "05" : case "5":
+		return "MAY";
+	case "06" : case "6":
+		return "JUN";
+	case "07" : case "7":
+		return "JUL";
+	case "08" : case "8":
+		return "AGO";
+	case "09" : case "9":
+		return "SEP";
+	case "10" :
+		return "OCT";
+	case "11" :
+		return "NOV";
+	case "12" :
+		return "DIC";
+	}
+}
+
+function getMesIngles(mes) {
+	switch (mes){
+	case "01" : case "1":
+		return "JAN";
+	case "02" : case "2":
+		return "FEB";
+	case "03" : case "3":
+		return "MAR";
+	case "04" : case "4":
+		return "APR";
+	case "05" : case "5":
+		return "MAY";
+	case "06" : case "6":
+		return "JUN";
+	case "07" : case "7":
+		return "JUL";
+	case "08" : case "8":
+		return "AUG";
+	case "09" : case "9":
+		return "SEP";
+	case "10" :
+		return "OCT";
+	case "11" :
+		return "NOV";
+	case "12" :
+		return "DEC";
+	}
+}
+
+function formatDiaADosChars(dia) {
+	if(dia < 10)
+		return "0" + dia;
+	return dia;
+}
+
+function getAnio(anio) {
+	return "20" + anio;
+}
+
+function parseDateTimeJson(date){
+	if (date == null)
+		return "";
+	var day = date.dayOfMonth;
+	if(day < 10) 
+		day = "0" + day;
+	var month = date.monthOfYear;
+	if(month < 10) 
+		month = "0" + month;
+	 var anio = date.year; 
+	  if (anio < 10) 
+	    anio = "0" + anio;
+	return day + "/" + month + "/" + anio;
+}
+
+function parseDateTimeJsonConBarra(date){
+	if (date == null)
+		return "";
+	var day = date.dayOfMonth;
+	if(day < 10) 
+		day = "0"+ day;
+	var month = date.monthOfYear;
+	if(month < 10) 
+		month = "0"+ month;
+	return day + "/" + month + "/" + date.year;
+}
+
+function parseDateTimeJsonMesyAnio(date){
+	if (date == null)
+		return "";
+	var month = date.monthOfYear;
+	if(month < 10) month = "0"+ month;
+	return month + "/" + date.year;
+}
+
+function parseDateTimeJsonMesyAnioMMyy(date){
+	if (date == null)
+		return "";
+	var month = date.monthOfYear;
+	var anio = date.year.toString();
+	if(month < 10) month = "0"+ month;
+	return month + "/" + anio.substring(2,4);
+}
+
+function parserHora(time) {
+	if (time == null)
+		return "";
+	return time.substring(0,2) + ":" + time.substring(2,4) + ":" + time.substring(4,6);
+}
+
+function parseHoraFromDateTime(date){
+	if (date == null)
+		return "";
+	var minutos = date.minuteOfHour < 10 ? "0" + date.minuteOfHour : date.minuteOfHour;
+	var segundos = date.secondOfMinute < 10 ? "0" + date.secondOfMinute : date.secondOfMinute;
+	return date.hourOfDay + ":" + minutos + ":" + segundos;
+}
+
+function obtainMonedaDesc(codMoneda) {
+	if (codMoneda == 'URGP')
+		return "pesos";
+	else if (codMoneda == 'US.D' || codMoneda == 'USD')
+		return "d\u00F3lares";  
+	else if (codMoneda == 'EUR')
+		return "euros";
+	else if (codMoneda == 'URGI')
+		return "unidades indexadas";
+	else if (codMoneda == 'SFCS')
+		return "francos suizos";
+	else if (codMoneda == 'YEN')
+		return "yenes";
+	else if (codMoneda == 'LSTG')
+		return "libras";
+	else if (codMoneda == 'CA.D')
+		return "dolares canadienses";
+		return codMoneda;
+}
+
+function obtainMonedaDescCapitalized(moneda) {
+	if (moneda == 'PESOS') {
+		return "Pesos";
+	} else if (moneda == 'DOLARES') {
+		return "D\u00F3lares";
+	}
+}
+
+function obtainMonedaDescMayuscula(codMoneda) {
+	if (codMoneda == 'URGP')
+		return "PESOS";
+	else if (codMoneda == 'US.D' || codMoneda == 'USD')
+		return "D\u00d3LARES";  
+	else if (codMoneda == 'EUR')
+		return "EUROS";
+	else if (codMoneda == 'URGI')
+		return "UNIDADES INDEXADAS";
+	else if (codMoneda == 'SFCS')
+		return "FRANCOS SUIZOS";
+	else if (codMoneda == 'YEN')
+		return "YENES";
+	else if (codMoneda == 'LSTG')
+		return "LIBRAS";
+	else if (codMoneda == 'CA.D')
+		return "DOLARES CANADIENSES";
+		return codMoneda;
+}
+
+function obtainMonedaDescSing(codMoneda) {
+	if (codMoneda == 'URGP')
+		return "peso";
+	else if (codMoneda == 'US.D')
+		return "d&oacute;lar";
+	else if (codMoneda == 'EUR')
+		return "euro";
+	else if (codMoneda == 'URGI')
+		return "unidad indexada";
+	else if (codMoneda == 'SFCS')
+		return "franco suizo";
+	else if (codMoneda == 'YEN')
+		return "yen";
+	else if (codMoneda == 'LSTG')
+		return "libra";
+	else if (codMoneda == 'CA.D')
+		return "dolar canadiense";
+		return codMoneda;
+}
+
+function obtainSimbolMoneda(codMoneda) {
+	if (codMoneda == 'URGP')
+		return "$";
+	else if (codMoneda == 'US.D')
+		return "US$";
+	else if (codMoneda == 'EUR')
+		return "EUR";
+	else if (codMoneda == 'URGI')
+		return "UI";
+	else
+		return codMoneda;
+}
+
+function parseTipoCuenta(tipo) {
+	if (tipo == '0')
+		return "Cuenta Corriente";
+	else if (tipo == '1')
+		return "Caja de Ahorro";
+	else if (tipo == '2')
+		return "Cuenta Recaudadora";
+	else if (tipo == '3')
+		return "Cuenta de Ahorro Junior";
+	else if (tipo == '4')
+		return "Ita&uacute; Alimentaci&oacute;n";
+	else
+		return tipo;
+}
+
+function parseCodigoCuenta(tipo){
+	switch (tipo) {
+	case "0":
+		return "CC";
+	case "1":
+		return "CA";
+	case "2":
+		return "CR";
+	case "3":
+		return "CJ";
+	case "4":
+		return "IA";
+	default:
+		return "";
+	}
+}
+
+function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function armarDivValidacionToken(tieneTokenFisico, tieneTokenSms, nroCelular, urlSolicitarTokenSms, urlSolicitarTokenMail){
+	var content = '';
+	
+	if (tieneTokenFisico || tieneTokenSms) {
+		content += 
+		'<br><div class="tab-content cont-info-token form-inline" style="border-radius: 1.5rem;">' +
+			'<div class="row ingresar-codigo mt-4">' +
+				'<div class="col-sm-3">' +
+					'<label><strong>Validaci&oacute;n</strong></label>' +
+				'</div>' +	
+				'<div class="col-sm-5">' +
+					'<select class="form-control" id="status" name="status" onchange="mostrar(this.value);">' +
+						(tieneTokenSms ? '<option value="tokensms">Recibir Token por '+ (esCelularExtranjero(nroCelular) ? 'Mail' : 'SMS')  +'</option>' : '') +
+						(tieneTokenFisico ?'<option value="tokenfisico">Token F&iacute;sico</option>' : '') +
+					'</select>' +
+				'</div>' +
+				'<div class="col-sm-4">';
+		if(!esCelularExtranjero(nroCelular))
+			content +=	'<button class="btn btn-lg btn-primario mt-1" id="btn-token-sms" data-action="'+urlSolicitarTokenSms+'" data-function="solicitarTokenSms" data-error="showDefaultError" title="OK">OK</button>';
+		else
+			content +=	'<button class="btn btn-lg btn-primario mt-1" id="btn-token-mail" data-action="'+urlSolicitarTokenMail+'" data-function="solicitarTokenMail" data-error="showDefaultError" title="OK">OK</button>';
+		
+		content += '<span class="codigo-enviado"><input placeholder="Ingres&aacute; el c&oacute;digo" type="text" class="form-control enter-code" name="token" maxlength="6"></span>' +
+		'</div>' +
+				'</div>' +
+			'<div class="text-properties info-token mt-5">';
+			 	if(!esCelularExtranjero(nroCelular)){
+				 content += '<div id="tokensms" style="display: block;">' +
+							'<p class="text-info1" style="display: block;">Tu c&oacute;digo ser&aacute; enviado al n&uacute;mero ' + telefonoPrimeros5conX(nroCelular) + '</p>' +
+							'<p class="text-info2">Tu c&oacute;digo fue enviado al n&uacute;mero ' + telefonoPrimeros5conX(nroCelular) + '</p>' +
+							'<p class="text-info3">&iquest;No recibiste el Token por SMS? Hac&eacute; <a id="btn-token-mail" class="link-text">click aqu&iacute;</a> para recibir tu Token por email.</p>' +
+							'<p class="text-info4">Enviamos un token a tu email</p>' +
+							'</div>';
+			 }
+			 content += '<div id="tokenfisico">' +
+				'</div>' +
+			'</div>'+
+		'</div>';
+	}
+	
+	return content;
+}
+
+
+function esCelularExtranjero(nroCelular){
+	var reg = /^09/;
+	return !(reg.test(nroCelular) && nroCelular.length == 9);
+}
+
+function formatSello(sello){
+	if(sello == 'MASTER')
+		return "MasterCard";
+	if(sello == 'DINERS')
+		return "Diners";	
+	if(sello == 'VISA')
+		return "Visa";
+	if(sello == 'OCA')
+		return "Oca";
+	if(sello == 'OCA_VISA')
+		return "Oca Visa";
+}
+
+function formatDestinoTransferencia(destino) {
+	if(destino == 'OTR')
+		return "Otros";
+	if(destino == 'PDA')
+		return "Pago de Alquileres";
+	if(destino == 'PSS')
+		return "Pago de Sueldos";
+	if(destino == 'PAP')
+		return "Pago a Proveedores";
+	if(destino == 'PHP')
+		return "Pago de Honorarios Profesionales";
+	if(destino == 'PSP')
+		return "Pago Servicios Personales";
+	if(destino == '' || destino == null)
+		return "No seleccionaste destino";
+}
+
+function cerosCuentas(nroCuenta){
+	var numeroCuenta = nroCuenta.replace(/^[0]+/g,"");
+	return numeroCuenta;
+}
+
+function telefonoPrimeros5conX(nroTelefono){
+	var telefonoFormateado = nroTelefono.replace(/^\d{5}/g,"xxxxx");
+	return telefonoFormateado;
+}
+
+function editSello(sello) {
+	switch(sello){
+	case 'MASTER': return "Master";
+	case 'VISA': return "Visa";
+	case 'DINERS': return "Diners";
+	default: return "";
+	}
+}
+
+function pasarACentavos(cantidad) {
+	return parseFloat(cantidad)*100;
+}
+
+function initTablaBin(){
+	var tablaBin = [];
+	$(".tablaBin").each(function(index) {
+		tablaBin.push({
+		 codigo : $(this).val().split(":")[0],
+		 limite : parseFloat($(this).val().split(":")[1]),
+		 descripcion : $(this).val().split(":")[2]
+		})
+	});
+	return tablaBin;
+}
+
+//intervalo en milisegundos
+function keepaliver(cantIntentos, url, intervaloEjecucion) {
+    this.cantIntentos = cantIntentos;
+    this.url = url;
+    this.intervaloEjecucion = intervaloEjecucion;
+    var self= this;
+    window["noOpKeepAlive"] = function(){}
+    
+    this.init = function() {
+    	
+		for (var intento = 1; intento <= cantIntentos; intento++) {
+			
+			setTimeout(function() {
+					executeAjax(url, "noOpKeepAlive", $(this), null, "showDefaultError")
+				}, 
+			intento*intervaloEjecucion);
+		}
+    };
+	
+}
+
+function crearCookie(key, value) {
+	var expires = new Date(); 
+	$.cookie(key, value, { expires: expires.getTime() + 31536000000, path: '/' });
+}
+
+function leerCookie(key) {
+	return $.cookie(key);
+}
+
+function eliminarCookie(key) {
+	$.removeCookie(key);
+	$.removeCookie(key, { path: '/' });
+}
+
+function armarDivDestinoAlquileres(mapaPaises, mapaTiposDocumento, mapaCalidad, indexDiv, claseDivPrincial, transfLocal){
+	
+	var divTituloAlquileres = $('<div>');
+	divTituloAlquileres.append($('<h2>').text('Datos del inquilino').css('color', 'currentColor'));
+	
+	var divMensaje =  $('<div>').addClass('alert attention text-properties bk-amarillo-claro');
+	divMensaje.append($('<strong>').html('Atenci&oacute;n'));
+	divMensaje.append($('<p>').html('Completar esta informaci&oacute;n en forma parcial o err&oacute;nea, puede derivar en la imposibilidad de procesar la solicitud de transferencia, por parte de OCA o el banco receptor de la transacci&oacute;n.'));
+
+	var divPais = $('<div>').addClass('col-lg-5');
+	divPais.append($('<label>').html('Pa&iacute;s del documento'));
+
+	var divSelectPais = $('<div>').addClass('col-lg-7');
+	divSelectPais.append(getSelectPaises(mapaPaises, indexDiv, transfLocal));
+
+	var divTipoDocumento = $('<div>').addClass('col-lg-5');
+	divTipoDocumento.append($('<label>').html('Tipo de documento'));
+
+	var divSelectTipoDocumento = $('<div>').addClass('col-lg-7');
+	divSelectTipoDocumento.append(getSelectTipoDocumento(indexDiv, mapaTiposDocumento));
+
+	var divNroDocumento = $('<div>').addClass('col-lg-5');
+	divNroDocumento.append($('<label>').html('N&uacute;mero de documento'));
+
+	var divInputDocumento = $('<div>').addClass('col-lg-7');
+	divInputDocumento.append($('<input type="text" name="documentoInquilino['+indexDiv+']" maxlength="8" placeholder="N&uacute;mero de documento" style="padding-left: 10px;">')
+						.addClass('form-control'));
+
+	var divActuacion = $('<div>').addClass('col-lg-5 actuacion-alquiler-transferencias');
+	divActuacion.append($('<label>').html('Tipo de arrendador'));
+	
+	var divSelectActuacionAlquiler = $('<div>').addClass('col-lg-7');
+	divSelectActuacionAlquiler.append(getSelectActuacion(indexDiv, mapaCalidad));
+	
+	var divPrimeraRow = $('<div>').addClass('row row-content');
+	var divSegundaRow = $('<div>').addClass('row row-content');
+	var divTerceraRow = $('<div>').addClass('row row-content');
+	var divCuartaRow = $('<div>').addClass('row row-content');
+	
+	divPrimeraRow.append(divPais, divSelectPais);
+	divSegundaRow.append(divTipoDocumento, divSelectTipoDocumento);
+	divTerceraRow.append(divNroDocumento, divInputDocumento);
+	divCuartaRow.append(divActuacion, divSelectActuacionAlquiler);
+	
+	var idDiv = "destinoAlquileres"+indexDiv+"";
+	var divAlquilerPrincipal = $('<div id='+idDiv+'>').addClass(claseDivPrincial).addClass('div-alquiler-principal')
+					.addClass('mb-3').addClass('mt-4')
+					.append(divTituloAlquileres, divPrimeraRow, divSegundaRow, divTerceraRow, divCuartaRow, divMensaje);
+
+	return divAlquilerPrincipal;
+}
+
+function getSelectTipoDocumento(indexDiv, mapaTiposDocumento){
+	var selectTipoDocumento = $('<select name="codigoTipoDocumentoInquilino['+indexDiv+']">').addClass('form-control');
+
+	$.each(mapaTiposDocumento.mapaTiposDocumento, function(key, value) {
+     	selectTipoDocumento.append($('<option>', { value: key, html: value, selected: key == '01' ? true : false}));
+   });
+
+	return selectTipoDocumento;
+}
+
+function getSelectActuacion(indexDiv, mapaCalidad){
+	var selectActuacionAlquiler = $('<select name="calidadActuacionDepositante['+indexDiv+']">').addClass('form-control');
+	
+	$.each(mapaCalidad.mapaCalidad, function(key, value) {
+     	selectActuacionAlquiler.append($('<option>', { value: key, html: value, selected: key == '2' ? true : false}));
+   });
+
+	return selectActuacionAlquiler;
+}
+
+function getSelectPaises(listaPaises, indexDiv, transfLocal){
+	var selectPaises = $('<select name="paisDocumentoInquilino['+indexDiv+']">').addClass('form-control');
+
+	if(transfLocal) selectPaises.css("width","100%");
+
+	$.each(listaPaises.mapaPaises, function(key, value) {
+     	selectPaises.append($('<option>', { value: key, html: value, selected: key == 'UY' ? true : false}));
+   });
+
+	return selectPaises;
+} 
+
+  // Toggle the side navigation
+  $("#open-menu").on('click', function(e) {
+	$(".menu").toggleClass("menu-desplegado");
+	$(".backdrop").toggleClass("menu-open");
+  });
+
+  $(".backdrop").on('click', function(e) {
+	$(".backdrop").removeClass("menu-open");
+	$(".menu").removeClass("menu-desplegado");    
+  });
+
+
+$(document).ready(function () {
+	
+	var url = window.location.href;
+
+	if(url.includes('pagos')){
+		$('#pagos').addClass('active');
+	}else if(url.includes('credito')){
+		$('#tarjetas').addClass('active');
+	}else if(url.includes('prestamos')){
+		$('#prestamos').addClass('active');
+	}else if(url.includes('servicios')){
+		$('#servicios').addClass('active');
+	}else if(url.includes('beneficios')){
+		$('#beneficios').addClass('active');
+	}else if(url.includes('transferencias') || url.includes('beneficiarios') || url.includes('cuentas') || url.includes('ibc')){
+		$('#cuentas').addClass('active');
+	}
+});
+
+var EmailDomainSuggester = {
+		domains: ["gmail.com","hotmail.com","yahoo.com","outlook.com","adinet.com.uy","vera.com.uy"],
+		
+		init: function(elem) {
+			this.bindTo = elem;
+			this.addElements();
+			this.bindEvents();
+		},
+		
+		addElements: function() {
+			this.datalist = $("<datalist />", {id: 'email-options'}).insertAfter(this.bindTo);
+			this.bindTo.attr("list", "email-options");
+		},
+		
+		bindEvents: function() {
+			this.bindTo.on("keyup", this.testValue);
+		},
+		
+		testValue: function(event) {
+			var el = $(this);
+			value = el.val();
+			if (value.indexOf("@") != -1) {
+				value = value.split("@")[0];
+				EmailDomainSuggester.addDatalist(value); 
+			} else {
+				EmailDomainSuggester.datalist.empty();
+			}
+		},
+		
+		addDatalist: function(value) {
+			var i, newOptionsString = "";
+			for (i = 0; i < this.domains.length; i++) {
+				newOptionsString += "<option value='" + value + "@" + this.domains[i] + "'>";
+			}
+			this.datalist.html(newOptionsString);
+		}
+}
