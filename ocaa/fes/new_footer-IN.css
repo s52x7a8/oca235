@@ -1,0 +1,106 @@
+@import url("fonts/new_fonts.css?v=1");
+/*--------------------------------*
+ * Footer
+ --------------------------------*/
+
+#clearfooter{
+	clear:both;
+}
+
+#footer {
+	color:#333;
+	bottom: 0;
+    background: #fff;
+    overflow: hidden;
+    text-align: center;
+    letter-spacing: 0!important;
+}
+.footer_level_3 li{
+	font-size:0.98em;
+	float: left;
+    list-style: none;
+    padding: 8px 5px;
+    width: 7.4%;
+    position:relative;
+    font-family: 'carlito', Calibri, sans-serif;
+}
+
+.footer_level_3 li:first-child{
+	margin-left: 20px;
+}
+
+.footer_level_3 li  a:hover{
+	color:#279D2E;
+}
+.footer_level_2 li{
+	font-size: .87em;
+	display: inline-block;
+    list-style: none;
+}
+
+.footer_level_2 li:not(:last-child)::after{
+	content:"|";
+	margin: 0 5px 0 5px;
+}
+
+.footer_level_0{
+	font-size: .87em;
+}
+#footerLogoDiv {
+    position: static;
+    float: left;    
+}
+#footerRedondeadoDerecho{
+	float: right;
+	position:static;		
+}
+
+#liBipFooter{
+	cursor:pointer;
+}
+
+#cmbBipF{
+	display:none;
+	position: absolute;
+    left: 76px;
+    bottom: 5px;
+    padding: 5px 12px;
+    background: white;
+    z-index: 1;
+    border-radius: 3px;
+    border: 1px solid #e6e6e6;
+    box-shadow: 2px 2px 2px #dedede;
+}
+
+#cmbBipF div{
+	padding: 2px 0;
+}
+
+#footerLogoDiv img {
+	width: 5.091em; /* 56px */
+	height: 4.545em; /* 50 px */
+	display: inline;
+}
+
+#footerText {
+	position:relative;
+	z-index:1;
+    float: left;
+	line-height: 4.545em; /* 50 px */
+	padding-left: 0.909em; /* 10px */
+}
+
+
+#footerText a{
+	color:white;
+}
+
+.socialFoot{
+	font-size:1.5em;
+	position: relative;
+    top: 10px;
+    left: -5px;	
+}
+
+
+

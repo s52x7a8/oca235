@@ -1,0 +1,146 @@
+
+#keyboard {
+	
+	position: absolute;
+	z-index:200;
+	display: none;
+	border: 1px solid #71AE8B;
+	width: 337px;
+	padding: 10px;
+	cursor: move;
+	font-size:11px;
+	margin-left:0px;
+	font-family: "Trebuchet MS",Verdana, Arial, Helvetica, sans-serif;
+	background: #E3EDDB;
+}
+
+#keyboard div {
+
+	margin-bottom: 3px;
+}
+
+#divShiftOn,#divShiftOff{
+	float:left;
+	margin-left:22px;
+}
+#row0_shift, #divShiftOn {
+	display: none;
+}
+
+#row1_mayus, #row2_mayus, #row3_mayus {
+	display: none;
+}
+
+#row0, #row0_shift {
+	padding-left: 35px;
+}
+
+#row1, #row1_shift,#row1_mayus {
+	padding-left: 45px;
+}
+
+#row2, #row2_shift,#row2_mayus {
+	padding-left: 0px;
+}
+
+#row3, #row3_shift,#row3_mayus {
+	padding-left: 30px;
+}
+
+.teclaComun {
+	width:20px;
+	font-size:11px;
+	margin-left:0px;
+	font-family: "Trebuchet MS",Verdana, Arial, Helvetica, sans-serif;
+}
+
+#backspace {
+	width: 70px;
+	text-align: center;
+	font-family: "Trebuchet MS",Verdana, Arial, Helvetica, sans-serif;
+	font-size:11px;
+}
+
+#spacebar {
+	text-align: center;
+	margin-bottom: 0 !important;
+}
+
+#spacebar input {
+	width: 180px !important;
+	margin: 0 auto 0 auto ;
+	text-align: center;
+}
+
+#shift, #shifton {
+	width: 50px;
+	text-align: center;
+	font-family: "Trebuchet MS",Verdana, Arial, Helvetica, sans-serif;
+	font-size:11px;
+}
+
+#mayus, #mayuson {
+	width: 50px;
+	text-align: center;
+	font-family: "Trebuchet MS",Verdana, Arial, Helvetica, sans-serif;
+	font-size:11px;
+}
+
+#shifton {
+	
+	background-color: #CBCAC8 !important;
+	border: 1px solid gray !important;
+	color: gray !important;
+}
+
+#mayuson {
+	
+	background-color: #CBCAC8 !important;
+	border: 1px solid gray !important;
+	color: gray !important;
+}
+
+/*NUEVO ESTILO*/
+
+#keyboard{
+	background: #279d2e;
+	box-shadow: -6px -6px 3px #38383880;
+	border-radius: 10px;
+	border: 1px solid #279d2e;
+}
+
+.teclaComun {
+    border: 1px solid #279d2e;
+    background-color: #fff;
+    padding: 3px;
+    margin: 0 0 0 1px;
+}
+
+#backspace {
+	border: 1px solid #279d2e;
+    background-color: #fff;
+    padding: 3px;
+    margin: 0 0 0 1px;
+}
+
+#spacebar input {
+	border: 1px solid #279d2e;
+	background-color: #fff;
+    padding: 3px;
+    margin: 0 0 0 1px;
+}
+
+#shift, #shifton {
+	border: 1px solid #279d2e;
+    background-color: #fff;
+    padding: 3px;
+    margin: 0 0 0 1px;
+}
+
+#mayus, #mayuson {
+	border: 1px solid #279d2e;
+    background-color: #fff;
+    padding: 3px;
+    margin: 0 0 0 1px;
+}
+/*FIN NUEVO ESTILO*/
